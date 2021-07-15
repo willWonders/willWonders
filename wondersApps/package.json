@@ -1,0 +1,15 @@
+{
+  "name": "wondersapp",
+  "version": "1.0.1",
+  "description": "云南移动平台H5与原生交互公共方法",
+  "main": "https://github.com/xueyuwan/wondersApp",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/xueyuwan/wonder-app.git"
+  },
+  "author": "wanxueyu",
+  "license": "ISC"
+}
