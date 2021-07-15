@@ -1,15 +1,22 @@
 {
-  "name": "wondersapp",
-  "version": "1.0.1",
-  "description": "云南移动平台H5与原生交互公共方法",
-  "main": "https://github.com/xueyuwan/wondersApp",
+  "name": "wondersapps",
+  "version": "1.0.0",
+  "description": "万达信息",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/xueyuwan/wonder-app.git"
+    "url": "git+https://github.com/willWonders/willWonders.git"
   },
-  "author": "wanxueyu",
-  "license": "ISC"
+  "keywords": [
+    "万达信息"
+  ],
+  "author": "will",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/willWonders/willWonders/issues"
+  },
+  "homepage": "https://github.com/willWonders/willWonders#readme"
 }
