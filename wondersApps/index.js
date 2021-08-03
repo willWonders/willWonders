@@ -13,6 +13,9 @@
     // isWeixin: u.indexOf('micromessenger') != -1,
     // isApp: u.indexOf('android_smartidata') != -1,
     // isIOSApp: u.indexOf('ios_smartidata') != -1
+    isHainan:
+      u.indexOf('ios_health_hainan') != -1 ||
+      u.indexOf('android_health_hainan') != -1,
     isWeixin: u.indexOf('micromessenger') != -1,
     isApp: u.indexOf('android_health_hainan') != -1,
     isIOSApp: u.indexOf('ios_health_hainan') != -1,
@@ -37,7 +40,7 @@
   WondersApp.prototype.appCall = function (callAppIndex, stringResult) {
     if (this.callAppMap[callAppIndex]) {
       this.callAppMap[callAppIndex](stringResult)
-       if (
+      if (
         regNumber.test(callAppIndex) &&
         callAppIndex.indexOf('header') == -1
       ) {
@@ -225,31 +228,102 @@
     }
     this.callApp(params)
   }
+  WondersApp.prototype.changeRole = function () {
+    let params = {
+      type: 'changeRole',
+      params: {},
+    }
+    this.callApp(params)
+  }
+  WondersApp.prototype.logout = function () {
+    let params = {
+      type: 'logout',
+      params: {},
+    }
+    this.callApp(params)
+  }
   WondersApp.prototype.tabConfig = function (data) {
     let params = { type: 'tabConfig', params: data }
     this.callApp(params)
   }
   WondersApp.prototype.setHeader = function (data) {
-     if (data['right'] && data['right'].length > 0) {
+    function deepCopy(obj) {
+      var newobj = obj.constructor === Array ? [] : {}
+      if (typeof obj !== 'object') {
+        return obj
+      } else {
+        for (var i in obj) {
+          if (typeof obj[i] === 'object') {
+            //判断对象的这条属性是否为对象
+            newobj[i] = deepCopy(obj[i]) //若是对象进行嵌套调用
+          } else {
+            newobj[i] = obj[i]
+          }
+        }
+      }
+      return newobj //返回深度克隆后的对象
+    }
+    let nativeData = deepCopy(data)
+    if (data['right'] && data['right'].length > 0) {
       let rightLenth = data['right'].length
       for (let i = 0, len = rightLenth; i < len; i++) {
-        let appIndex = 'header' + JSON.stringify(data['right'][i])
+        let appIndex = 'header-right' + i
         this.callAppMap[appIndex] = data['right'][i]['callBackMethod']
-        data['right'][i]['callBackMethod'] = appIndex
+        nativeData['right'][i]['callBackMethod'] = appIndex
       }
     }
+
     if (data['left'] && data['left'].length > 0) {
       let leftLenth = data['left'].length
       for (let j = 0, len = leftLenth; j < len; j++) {
-        let appIndex = 'header' + JSON.stringify(data['left'][j])
-        this.callAppMap[appIndex] = data['left'][j]['callBackMethod']
-        data['left'][j]['callBackMethod'] = appIndex
+        let appIndex = 'header-left' + j
+        this.callAppMap[appIndex] = dataCopy['left'][j]['callBackMethod']
+        nativeData['left'][j]['callBackMethod'] = appIndex
       }
     }
+    if (
+      data.titleView.searchMethods &&
+      data.titleView.searchMethods.editingdidbegin
+    ) {
+      let appIndex1 = 'editingdidbegin'
+      this.callAppMap[appIndex1] = data.titleView.searchMethods.editingdidbegin
+      nativeData.titleView.searchMethods.editingdidbegin = appIndex1
+    }
+    if (
+      data.titleView.searchMethods &&
+      data.titleView.searchMethods.editingdidend
+    ) {
+      let appIndex2 = 'editingdidend'
+      this.callAppMap[appIndex2] = data.titleView.searchMethods.editingdidend
+      nativeData.titleView.searchMethods.editingdidend = appIndex2
+    }
+    if (
+      data.titleView.searchMethods &&
+      data.titleView.searchMethods.editingchanged
+    ) {
+      let appIndex3 = 'editingchanged'
+      this.callAppMap[appIndex3] = data.titleView.searchMethods.editingchanged
+      nativeData.titleView.searchMethods.editingchanged = appIndex3
+    }
+    if (
+      data.titleView.searchMethods &&
+      data.titleView.searchMethods.editingfinished
+    ) {
+      let appIndex4 = 'editingfinished'
+      this.callAppMap[appIndex4] = data.titleView.searchMethods.editingfinished
+      nativeData.titleView.searchMethods.editingfinished = appIndex4
+    }
+    if (data.titleView.callBackMethod) {
+      let appIndex5 = 'searchCallBackMethod'
+      this.callAppMap[appIndex5] = data.titleView.callBackMethod
+      nativeData.titleView.callBackMethod = appIndex5
+    }
     if (this.QuickVersion.isIOSApp) {
-      window.webkit.messageHandlers.setHeader.postMessage(JSON.stringify(data))
+      window.webkit.messageHandlers.setHeader.postMessage(
+        JSON.stringify(nativeData),
+      )
     } else if (this.QuickVersion.isApp) {
-      window.WDAndroid.setHeader(JSON.stringify(data))
+      window.WDAndroid.setHeader(JSON.stringify(nativeData))
     }
   }
   WondersApp.prototype.tabConfig = function (data) {
@@ -326,7 +400,6 @@
     hasNavigation,
     float,
   ) {
-    console.log('进入原生跳转')
     let params = {
       type: 'H5',
       toPage: url,
