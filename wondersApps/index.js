@@ -1,351 +1,226 @@
+let NativeBridge = require('./nativeBridge')
+let msbs = require('./msbs')
 ;(function (window) {
-  function WondersApp() {
-    var that = this
-    this.indexCount = 1000
-    this.callAppMap = {}
-    this.onPressBackKey = null
-    window.executeJS = function (callAppIndex, stringResult) {
-      that.appCall(callAppIndex, stringResult)
-    }
-  }
+  function WondersApp() {}
   var u = navigator.userAgent.toLowerCase()
+  function getQueryVariable(variable) {
+    var query = window.location.search.substring(1)
+    var vars = query.split('&')
+    for (var i = 0; i < vars.length; i++) {
+      var pair = vars[i].split('=')
+      if (pair[0] == variable) {
+        return pair[1]
+      }
+    }
+    return false
+  }
+  // 环境判断
   WondersApp.prototype.QuickVersion = {
-    // isWeixin: u.indexOf('micromessenger') != -1,
-    // isApp: u.indexOf('android_smartidata') != -1,
-    // isIOSApp: u.indexOf('ios_smartidata') != -1
+    isWeixin: u.indexOf('micromessenger') != -1,
+    isHainanAndroid: u.indexOf('android_health_hainan') != -1,
+    isHainanIOS: u.indexOf('ios_health_hainan') != -1,
     isHainan:
       u.indexOf('ios_health_hainan') != -1 ||
       u.indexOf('android_health_hainan') != -1,
-    isWeixin: u.indexOf('micromessenger') != -1,
-    isApp: u.indexOf('android_health_hainan') != -1,
-    isIOSApp: u.indexOf('ios_health_hainan') != -1,
+    isMSBS:
+      getQueryVariable('source') == 'hnymt' || localStorage.source == 'hnymt',
   }
-  WondersApp.prototype.getAppIndex = function (name) {
-    let thisIndex = this.indexCount++
-    let numString = name + thisIndex.toString()
-    return numString
-  }
-  WondersApp.prototype.callApp = function (params) {
-    if (this.QuickVersion.isIOSApp) {
-      window.webkit.messageHandlers.nativePermission.postMessage(
-        JSON.stringify(params),
-      )
-    } else if (this.QuickVersion.isApp) {
-      window.WDAndroid.nativePermission(JSON.stringify(params))
-    } else {
-      console.log('h5')
-    }
-  }
-  var regNumber = /\d+/
-  WondersApp.prototype.appCall = function (callAppIndex, stringResult) {
-    if (this.callAppMap[callAppIndex]) {
-      this.callAppMap[callAppIndex](stringResult)
-      if (
-        regNumber.test(callAppIndex) &&
-        callAppIndex.indexOf('header') == -1
-      ) {
-        this.callAppMap[callAppIndex] = null
-        delete this.callAppMap[callAppIndex]
-      } else {
-        // console.log('不移出')
-      }
-    }
-  }
+
+  //二维码
   WondersApp.prototype.qrCodeScan = function (data, callback) {
-    var appIndex = this.getAppIndex('qrCodeScan')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
-      // console.log(this.callAppMap);
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.qrCodeScan(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.qrCodeScan(data, callback)
     }
-    let params = { type: 'qrCodeScan', params: data, callBackMethod: appIndex }
-    this.callApp(params)
   }
+
   WondersApp.prototype.callPhone = function (data, callback) {
-    var appIndex = this.getAppIndex('callPhone')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.callPhone(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.callPhone(data, callback)
     }
-    let params = { type: 'phone', params: data, callBackMethod: appIndex }
-    this.callApp(params)
   }
-  WondersApp.prototype.getVersion = function (callback) {
-    var appIndex = this.getAppIndex('getVersion')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+  WondersApp.prototype.getVersion = function (data) {
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.getVersion(data)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.getVersion(data)
     }
-    let params = { type: 'version', callBackMethod: appIndex }
-    this.callApp(params)
   }
-  WondersApp.prototype.share = function (data, callback) {
-    var appIndex = this.getAppIndex('share')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+  WondersApp.prototype.share = function (data) {
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.share(data)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.share(data)
     }
-    let params = { type: 'share', params: data, callBackMethod: appIndex }
-    this.callApp(params)
   }
   WondersApp.prototype.getLocation = function (data, callback) {
-    var appIndex = this.getAppIndex('getLocation')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.getLocation(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.getLocation(data, callback)
     }
-    let params = { type: 'location', params: data, callBackMethod: appIndex }
-    this.callApp(params)
   }
   WondersApp.prototype.chooseImage = function (data, callback) {
-    var appIndex = this.getAppIndex('chooseImage')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.chooseImage(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.chooseImage(data, callback)
     }
-    let params = {
-      type: 'photoLibrary',
-      params: data,
-      callBackMethod: appIndex,
-    }
-    this.callApp(params)
   }
-  WondersApp.prototype.camera = function (callback) {
-    var appIndex = this.getAppIndex('camera')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+  WondersApp.prototype.camera = function (data, callback) {
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.camera(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.camera(data, callback)
     }
-    let params = { type: 'camera', callBackMethod: appIndex }
-    this.callApp(params)
   }
   WondersApp.prototype.nativeStorage = function (data, callback) {
-    var appIndex = this.getAppIndex('nativeStorage')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.nativeStorage(data, callback)
+    } else {
+      if (data.method == 'get') {
+        let key = data.key
+        return localStorage[key]
+      }
     }
-    let params = {
-      type: 'nativeStorage',
-      params: data,
-      callBackMethod: appIndex,
-    }
-    this.callApp(params)
   }
   WondersApp.prototype.nativeVioce = function (callback) {
-    var appIndex = this.getAppIndex('nativeVioce')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.nativeVioce(callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.nativeVioce(callback)
     }
-    let params = { type: 'voice', callBackMethod: appIndex }
-    this.callApp(params)
   }
   WondersApp.prototype.nativeSearchVal = function (data) {
-    let params = { type: 'searchContent', params: data }
-    this.callApp(params)
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.nativeSearchVal(data)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.nativeSearchVal(data)
+    }
   }
   WondersApp.prototype.authentication = function (data, callback) {
-    var appIndex = this.getAppIndex('authentication')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.authentication(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.authentication(data, callback)
     }
-    let params = {
-      type: 'authentication',
-      params: data,
-      callBackMethod: appIndex,
-    }
-    this.callApp(params)
   }
   WondersApp.prototype.authType = function (callback) {
-    var appIndex = this.getAppIndex('authType')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.authType(callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.authType(callback)
     }
-    let params = { type: 'authType', callBackMethod: appIndex }
-    this.callApp(params)
   }
   WondersApp.prototype.rotate = function (data) {
-    let params = { type: 'rotate', params: data }
-    this.callApp(params)
-  }
-  WondersApp.prototype.login = function (data, callback) {
-    var appIndex = this.getAppIndex('login')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.rotate(data)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.rotate(rotate)
     }
-    let params = { type: 'login', params: data, callBackMethod: appIndex }
-    this.callApp(params)
   }
   WondersApp.prototype.download = function (data) {
-    let params = { type: 'download', params: data }
-    this.callApp(params)
-  }
-  WondersApp.prototype.cacheSize = function (callback) {
-    var appIndex = this.getAppIndex('cacheSize')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.download(data)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.download(data)
     }
-    let params = { type: 'cacheSize', callBackMethod: appIndex }
-    this.callApp(params)
+  }
+
+  WondersApp.prototype.cacheSize = function (callback) {
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.cacheSize(callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.cacheSize(callback)
+    }
   }
   WondersApp.prototype.clearCache = function (callback) {
-    var appIndex = this.getAppIndex('clearCache')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.clearCache(callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.clearCache(callback)
     }
-    let params = { type: 'clearCache', callBackMethod: appIndex }
-    this.callApp(params)
   }
   WondersApp.prototype.newMessage = function (data, callback) {
-    var appIndex = this.getAppIndex('newMessage')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.newMessage(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.newMessage(data, callback)
     }
-    let params = { type: 'newMessage', params: data, callBackMethod: appIndex }
-    this.callApp(params)
   }
   WondersApp.prototype.video = function (data, callback) {
-    var appIndex = this.getAppIndex('video')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.video(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.video(data, callback)
     }
-    let params = { type: 'video', params: data, callBackMethod: appIndex }
-    this.callApp(params)
-  }
-  WondersApp.prototype.bluetoothDevice = function (data, callback) {
-    var appIndex = this.getAppIndex('bluetoothDevice')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
-    }
-    let params = {
-      type: 'bluetoothDevice',
-      params: data,
-      callBackMethod: appIndex,
-    }
-    this.callApp(params)
   }
   WondersApp.prototype.refreshToken = function (data, callback) {
-    var appIndex = this.getAppIndex('refreshToken')
-    if (callback) {
-      this.callAppMap[appIndex] = callback
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.refreshToken(data, callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.refreshToken(data, callback)
     }
-    let params = {
-      type: 'refreshToken',
-      params: data,
-      callBackMethod: appIndex,
-    }
-    this.callApp(params)
   }
   WondersApp.prototype.changeRole = function () {
-    let params = {
-      type: 'changeRole',
-      params: {},
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.changeRole()
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.changeRole()
     }
-    this.callApp(params)
   }
   WondersApp.prototype.logout = function () {
-    let params = {
-      type: 'logout',
-      params: {},
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.logout()
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.logout()
     }
-    this.callApp(params)
   }
   WondersApp.prototype.tabConfig = function (data) {
-    let params = { type: 'tabConfig', params: data }
-    this.callApp(params)
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.tabConfig(data)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.tabConfig(data)
+    }
   }
+  //头部设置
   WondersApp.prototype.setHeader = function (data) {
-    function deepCopy(obj) {
-      var newobj = obj.constructor === Array ? [] : {}
-      if (typeof obj !== 'object') {
-        return obj
-      } else {
-        for (var i in obj) {
-          if (typeof obj[i] === 'object') {
-            //判断对象的这条属性是否为对象
-            newobj[i] = deepCopy(obj[i]) //若是对象进行嵌套调用
-          } else {
-            newobj[i] = obj[i]
-          }
-        }
-      }
-      return newobj //返回深度克隆后的对象
-    }
-    let nativeData = deepCopy(data)
-    if (data['right'] && data['right'].length > 0) {
-      let rightLenth = data['right'].length
-      for (let i = 0, len = rightLenth; i < len; i++) {
-        let appIndex = 'header-right' + i
-        this.callAppMap[appIndex] = data['right'][i]['callBackMethod']
-        nativeData['right'][i]['callBackMethod'] = appIndex
-      }
-    }
-
-    if (data['left'] && data['left'].length > 0) {
-      let leftLenth = data['left'].length
-      for (let j = 0, len = leftLenth; j < len; j++) {
-        let appIndex = 'header-left' + j
-        this.callAppMap[appIndex] = dataCopy['left'][j]['callBackMethod']
-        nativeData['left'][j]['callBackMethod'] = appIndex
-      }
-    }
-    if (
-      data.titleView.searchMethods &&
-      data.titleView.searchMethods.editingdidbegin
-    ) {
-      let appIndex1 = 'editingdidbegin'
-      this.callAppMap[appIndex1] = data.titleView.searchMethods.editingdidbegin
-      nativeData.titleView.searchMethods.editingdidbegin = appIndex1
-    }
-    if (
-      data.titleView.searchMethods &&
-      data.titleView.searchMethods.editingdidend
-    ) {
-      let appIndex2 = 'editingdidend'
-      this.callAppMap[appIndex2] = data.titleView.searchMethods.editingdidend
-      nativeData.titleView.searchMethods.editingdidend = appIndex2
-    }
-    if (
-      data.titleView.searchMethods &&
-      data.titleView.searchMethods.editingchanged
-    ) {
-      let appIndex3 = 'editingchanged'
-      this.callAppMap[appIndex3] = data.titleView.searchMethods.editingchanged
-      nativeData.titleView.searchMethods.editingchanged = appIndex3
-    }
-    if (
-      data.titleView.searchMethods &&
-      data.titleView.searchMethods.editingfinished
-    ) {
-      let appIndex4 = 'editingfinished'
-      this.callAppMap[appIndex4] = data.titleView.searchMethods.editingfinished
-      nativeData.titleView.searchMethods.editingfinished = appIndex4
-    }
-    if (data.titleView.callBackMethod) {
-      let appIndex5 = 'searchCallBackMethod'
-      this.callAppMap[appIndex5] = data.titleView.callBackMethod
-      nativeData.titleView.callBackMethod = appIndex5
-    }
-    if (this.QuickVersion.isIOSApp) {
-      window.webkit.messageHandlers.setHeader.postMessage(
-        JSON.stringify(nativeData),
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.setHeader(data)
+    } else if (this.QuickVersion.isMSBS) {
+      window.OnecodeJSBridge.call(
+        'appNavBar',
+        {
+          show: false,
+        },
+        function (result) {
+          console.log(result)
+        },
       )
-    } else if (this.QuickVersion.isApp) {
-      window.WDAndroid.setHeader(JSON.stringify(nativeData))
     }
   }
-  WondersApp.prototype.tabConfig = function (data) {
-    if (this.QuickVersion.isIOSApp) {
-      window.webkit.messageHandlers.setHeader.postMessage(JSON.stringify(data))
-    } else if (this.QuickVersion.isApp) {
-      window.WDAndroid.setHeader(JSON.stringify(data))
+  WondersApp.prototype.onVisible = function (callback) {
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.onVisible(callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.onVisible(callback)
     }
   }
-  WondersApp.prototype.onVisible = function (onVisible) {
-    if (this.QuickVersion.isIOSApp || this.QuickVersion.isApp) {
-      this.callAppMap['onVisible'] = onVisible
+  WondersApp.prototype.onInvisible = function (callback) {
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.onInvisible(callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.onInvisible(callback)
     }
   }
-  WondersApp.prototype.onInvisible = function (onInvisible) {
-    if (this.QuickVersion.isIOSApp || this.QuickVersion.isApp) {
-      this.callAppMap['onInvisible'] = onInvisible
-    }
-  }
-  WondersApp.prototype.onDestory = function (onDestory) {
-    if (this.QuickVersion.isIOSApp || this.QuickVersion.isApp) {
-      this.callAppMap['onDestory'] = onDestory
+  WondersApp.prototype.onDestory = function (callback) {
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.onDestory(callback)
+    } else if (this.QuickVersion.isMSBS) {
+      msbs.onDestory(callback)
     }
   }
   WondersApp.prototype.toNative = function (
@@ -356,19 +231,16 @@
     hasNavigation,
     float,
   ) {
-    var params = {
-      type: 'Native',
-      toPage: router,
-      params: nativeData != undefined ? nativeData : {},
-      refreshUrl: refreshUrl != undefined ? refreshUrl : '*',
-      animate: animate == undefined ? 'push' : animate,
-      hasNavigation: hasNavigation || 'true',
-      float: float || 'false',
-    }
-    if (this.QuickVersion.isIOSApp) {
-      window.webkit.messageHandlers.forward.postMessage(JSON.stringify(params))
-    } else if (this.QuickVersion.isApp) {
-      window.WDAndroid.forward(JSON.stringify(params))
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.toNative(
+        router,
+        nativeData,
+        refreshUrl,
+        animate,
+        hasNavigation,
+        float,
+      )
+    } else if (this.QuickVersion.isMSBS) {
     }
   }
   WondersApp.prototype.toBack = function (
@@ -378,47 +250,29 @@
     hasNavigation,
     float,
   ) {
-    let params = {
-      type: 'H5',
-      toPage: url || '',
-      params: nativeData != undefined ? nativeData : {},
-      refreshUrl: refreshUrl != undefined ? refreshUrl : '*',
-      hasNavigation: hasNavigation || 'true',
-      float: float || 'false',
-      animate: 'pop',
-    }
-    if (this.QuickVersion.isIOSApp) {
-      window.webkit.messageHandlers.forward.postMessage(JSON.stringify(params))
-    } else if (this.QuickVersion.isApp) {
-      window.WDAndroid.forward(JSON.stringify(params))
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.toBack(url, nativeData, refreshUrl, hasNavigation, float)
+    } else {
+      if (url) {
+        window.location.href = url
+      } else {
+        window.history.back(-1)
+      }
     }
   }
   WondersApp.prototype.toPage = function (
     url,
     nativeData,
-    refreshUrl,
     hasNavigation,
     float,
   ) {
-    let params = {
-      type: 'H5',
-      toPage: url,
-      params: nativeData != undefined ? nativeData : {},
-      refreshUrl: refreshUrl != undefined ? refreshUrl : '*',
-      hasNavigation: hasNavigation || 'true',
-      float: float || 'false',
-      animate: 'push',
-    }
-    if (this.QuickVersion.isIOSApp) {
-      console.log('isIOSApp')
-      window.webkit.messageHandlers.forward.postMessage(JSON.stringify(params))
-    } else if (this.QuickVersion.isApp) {
-      console.log('isApp')
-      window.WDAndroid.forward(JSON.stringify(params))
+    if (this.QuickVersion.isHainan) {
+      NativeBridge.toPage(url, nativeData, hasNavigation, float)
     } else {
-      console.log('H5')
+      window.location.href = url
     }
   }
+
   var wondersApp = new WondersApp()
   if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = wondersApp
