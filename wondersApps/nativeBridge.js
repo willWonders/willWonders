@@ -58,6 +58,15 @@
 			}
 		}
 	}
+	NativeBridge.prototype.wxPay = function (data, callback) {
+  		var appIndex = this.getAppIndex('wxPay')
+ 		 if (callback) {
+   		this.callAppMap[appIndex] = callback
+  		}
+  		let params = { type: 'wxPay', params: data, callBackMethod: appIndex }
+  		this.callApp(params)
+ 	}
+
 	NativeBridge.prototype.qrCodeScan = function (data, callback) {
 		var appIndex = this.getAppIndex('qrCodeScan')
 		if (callback) {

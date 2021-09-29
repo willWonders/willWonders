@@ -23,7 +23,13 @@ let msbs = require('./msbs')
 		isHainan: u.indexOf('ios_health_hainan') != -1 || u.indexOf('android_health_hainan') != -1,
 		isMSBS: getQueryVariable('source') == 'hnymt' || localStorage.source == 'hnymt'
 	}
-
+	WondersApp.prototype.wxPay = function (data, callback) {
+  		if (this.QuickVersion.isHainan) {
+  		 NativeBridge.wxPay(data, callback)
+ 		 } else {
+   		console.log('请在APP端调用')
+  		}
+ 	}
 	//二维码
 	WondersApp.prototype.qrCodeScan = function (data, callback) {
 		if (this.QuickVersion.isHainan) {
